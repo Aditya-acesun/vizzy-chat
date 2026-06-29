@@ -23,7 +23,6 @@ export const useChatStore = create((set, get) => ({
     if (!ws || ws.readyState !== WebSocket.OPEN) return
     const { multiMode, uploadedImage } = get()
 
-    // show user message with image preview if uploaded
     get().addMessage({
       role: 'user',
       type: uploadedImage ? 'image_prompt' : 'text',
@@ -38,7 +37,6 @@ export const useChatStore = create((set, get) => ({
       image: uploadedImage?.base64 || null
     }))
 
-    // clear uploaded image after sending
     set({ uploadedImage: null })
   },
 
@@ -46,7 +44,7 @@ export const useChatStore = create((set, get) => ({
     const { sessionId } = get()
     if (ws && ws.readyState === WebSocket.OPEN) return
 
-    ws = new WebSocket(`ws://localhost:8888/ws/chat/${sessionId}`)
+    ws = new WebSocket(`wss://vizzy-chat-gink.onrender.com/ws/chat/${sessionId}`)
 
     ws.onopen = () => {
       console.log('WS connected')
