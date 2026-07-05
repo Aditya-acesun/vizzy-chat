@@ -3,6 +3,7 @@ import uuid
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from app.services.intent_parser import parse_intent
 from app.services.image_service import generate_image, generate_image_from_upload
+from app.services.video_service import generate_video
 from app.services.copy_service import generate_copy
 from app.services.memory_service import get_memory, update_memory, get_style_context
 
@@ -20,49 +21,58 @@ async def chat_endpoint(websocket: WebSocket, session_id: str):
             multi = payload.get("multi", False)
             uploaded_image = payload.get("image", None)
 
-            intent_result = parse_intent(user_message)
-            intent = intent_result["intent"]
-
             await websocket.send_json({
                 "type": "status",
                 "content": "✦ Understanding your request..."
             })
 
-            style_context = get_style_context(session_id)
-            enriched_prompt = user_message + style_context
+            intent_result = parse_intent(user_message)
+            intent = intent_result["intent"]
+            enhanced_prompt = intent_result.get("enhanced_prompt", user_message)
+            style = intent_result.get("style", "default")
 
-            # image upload flow
+            style_context = get_style_context(session_id)
+            final_prompt = enhanced_prompt + style_context
+
             if uploaded_image:
                 await websocket.send_json({
                     "type": "status",
                     "content": "🖼️ Transforming your image..."
                 })
-                results = await generate_image_from_upload(enriched_prompt, uploaded_image)
+                results = await generate_image_from_upload(final_prompt, uploaded_image)
                 response = {
                     "content_type": "image",
                     "images": results,
                     "prompt": user_message,
+                    "enhanced_prompt": enhanced_prompt,
                     "id": str(uuid.uuid4())
+                }
+
+            elif intent == "video":
+                await websocket.send_json({
+                    "type": "status",
+                    "content": "🎬 Generating video..."
+                })
+                result = await generate_video(final_prompt)
+                response = {
+                    "content_type": "video",
+                    "video_url": result["url"],
+                    "prompt": user_message,
+                    "id": result["id"]
                 }
 
             elif intent in ("image", "multi"):
                 count = 2 if multi else 1
                 await websocket.send_json({
                     "type": "status",
-                    "content": f"🎨 Generating {'2 variants' if multi else 'image'}..."
+                    "content": f"🎨 Generating {'2 variants' if multi else 'your artwork'}..."
                 })
-                results = await generate_image(enriched_prompt, count=count)
+                results = await generate_image(final_prompt, style=style, count=count)
                 response = {
                     "content_type": "image_grid" if multi else "image",
                     "images": results,
                     "prompt": user_message,
-                    "id": str(uuid.uuid4())
-                }
-
-            elif intent == "video":
-                response = {
-                    "content_type": "text",
-                    "content": "🎬 Video generation coming soon!",
+                    "enhanced_prompt": enhanced_prompt,
                     "id": str(uuid.uuid4())
                 }
 
@@ -77,7 +87,7 @@ async def chat_endpoint(websocket: WebSocket, session_id: str):
             else:
                 response = {
                     "content_type": "text",
-                    "content": "✦ Try asking me to paint, draw, write a caption, or generate variants!",
+                    "content": "✦ Try asking me to paint, animate, write a caption, or generate variants!",
                     "id": str(uuid.uuid4())
                 }
 

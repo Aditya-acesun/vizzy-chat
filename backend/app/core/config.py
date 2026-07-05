@@ -8,5 +8,6 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite+aiosqlite:///./vizzy.db"
     SECRET_KEY: str = "dev-secret-key"
     HF_API_KEY: str = ""
+    GROQ_API_KEY: str = ""
 
 settings = Settings()
