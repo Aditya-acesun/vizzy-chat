@@ -3,7 +3,7 @@ import random
 from urllib.parse import quote
 
 def get_model_for_style(style: str) -> str:
-    style_model_map = {
+    return {
         "realistic": "flux-realism",
         "painterly": "flux",
         "dark": "flux",
@@ -13,12 +13,18 @@ def get_model_for_style(style: str) -> str:
         "cinematic": "flux-realism",
         "abstract": "flux",
         "default": "flux-realism"
-    }
-    return style_model_map.get(style, "flux-realism")
+    }.get(style, "flux-realism")
 
-async def generate_single_image(prompt: str, seed: int, model: str = "flux-realism") -> dict:
-    encoded = quote(prompt)
-    url = f"https://image.pollinations.ai/prompt/{encoded}?width=768&height=768&nologo=true&seed={seed}&model={model}&cache=false"
+VARIANT_SUFFIXES = [
+    ", highly detailed, sharp focus, professional",
+    ", cinematic lighting, ultra realistic, 8k quality",
+]
+
+async def generate_single_image(prompt: str, seed: int, model: str, variant: int = 0) -> dict:
+    # add variant suffix to force different cache bucket
+    full_prompt = prompt + VARIANT_SUFFIXES[variant % len(VARIANT_SUFFIXES)]
+    encoded = quote(full_prompt)
+    url = f"https://image.pollinations.ai/prompt/{encoded}?width=768&height=768&nologo=true&seed={seed}&model={model}"
     return {
         "id": str(uuid.uuid4()),
         "url": url,
@@ -31,8 +37,8 @@ async def generate_image(prompt: str, style: str = "default", count: int = 1) ->
     model = get_model_for_style(style)
 
     for i in range(count):
-        seed = random.randint(1, 999999)  # fully random seed every time
-        result = await generate_single_image(prompt, seed, model)
+        seed = random.randint(100000, 999999)
+        result = await generate_single_image(prompt, seed, model, variant=i)
         results.append(result)
 
     return results
@@ -40,8 +46,8 @@ async def generate_image(prompt: str, style: str = "default", count: int = 1) ->
 async def generate_image_from_upload(prompt: str, image_base64: str) -> list:
     enriched = f"{prompt}, photorealistic, high quality, detailed, professional photography"
     encoded = quote(enriched)
-    seed = random.randint(1, 999999)
-    url = f"https://image.pollinations.ai/prompt/{encoded}?width=768&height=768&nologo=true&seed={seed}&model=flux-realism&cache=false"
+    seed = random.randint(100000, 999999)
+    url = f"https://image.pollinations.ai/prompt/{encoded}?width=768&height=768&nologo=true&seed={seed}&model=flux-realism"
     return [{
         "id": str(uuid.uuid4()),
         "url": url,
