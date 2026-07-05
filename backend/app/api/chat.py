@@ -3,7 +3,6 @@ import uuid
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from app.services.intent_parser import parse_intent
 from app.services.image_service import generate_image, generate_image_from_upload
-from app.services.video_service import generate_video
 from app.services.copy_service import generate_copy
 from app.services.memory_service import get_memory, update_memory, get_style_context
 
@@ -51,14 +50,18 @@ async def chat_endpoint(websocket: WebSocket, session_id: str):
             elif intent == "video":
                 await websocket.send_json({
                     "type": "status",
-                    "content": "🎬 Generating video..."
+                    "content": "🎬 Processing video request..."
                 })
-                result = await generate_video(final_prompt)
+                results = await generate_image(
+                    final_prompt + ", cinematic, motion blur, dynamic, film still",
+                    count=1
+                )
                 response = {
-                    "content_type": "video",
-                    "video_url": result["url"],
+                    "content_type": "image",
+                    "images": results,
                     "prompt": user_message,
-                    "id": result["id"]
+                    "enhanced_prompt": "🎬 Video API coming soon — here's a cinematic still: " + enhanced_prompt,
+                    "id": str(uuid.uuid4())
                 }
 
             elif intent in ("image", "multi"):

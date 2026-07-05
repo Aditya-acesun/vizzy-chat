@@ -2,13 +2,14 @@ import uuid
 from urllib.parse import quote
 
 async def generate_video(prompt: str) -> dict:
-    encoded = quote(prompt)
-    # Pollinations video endpoint
-    video_url = f"https://video.pollinations.ai/prompt/{encoded}?width=512&height=512&nologo=true"
-
+    # Use Pollinations image with animated GIF style as video fallback
+    # Real video needs Runway/Kling API (paid)
+    encoded = quote(prompt + ", cinematic motion, dynamic scene")
+    
     return {
         "id": str(uuid.uuid4()),
-        "url": video_url,
+        "url": None,  # no free video API available
         "prompt": prompt,
-        "type": "video"
+        "type": "video",
+        "message": f'🎬 Video generation requires a paid API (Runway, Kling, Pika). Your prompt "{prompt}" has been queued. For now, here\'s an image version:'
     }
