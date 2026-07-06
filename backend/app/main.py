@@ -28,3 +28,12 @@ async def startup():
 @app.get("/health")
 async def health():
     return {"status": "ok", "app": settings.APP_NAME}
+
+@app.get("/debug")
+async def debug():
+    return {
+        "stability_key_set": bool(settings.STABILITY_API_KEY),
+        "groq_key_set": bool(settings.GROQ_API_KEY),
+        "stability_key_preview": settings.STABILITY_API_KEY[:8] + "..." if settings.STABILITY_API_KEY else "NOT SET",
+        "app": settings.APP_NAME
+    }
