@@ -9,5 +9,6 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "dev-secret-key"
     HF_API_KEY: str = ""
     GROQ_API_KEY: str = ""
+    STABILITY_API_KEY: str = ""
 
 settings = Settings()
