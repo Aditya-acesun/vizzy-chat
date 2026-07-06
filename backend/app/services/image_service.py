@@ -20,6 +20,7 @@ async def generate_with_stability(prompt: str) -> str | None:
                     "Authorization": f"Bearer {settings.STABILITY_API_KEY}",
                     "Accept": "image/*"
                 },
+                files={"none": (None, "")},
                 data={
                     "prompt": prompt,
                     "output_format": "jpeg",
